@@ -25,7 +25,7 @@ class DynamicsDataset(torch.utils.data.Dataset):
                  obs_transform=None,
                  demog_transform=None, 
                  num_action_steps=1,
-                 suppress_actions=False,
+                 type_actions='with',
                  gamma=0.95,
                  mask_prob=0.0):
         """
@@ -39,6 +39,7 @@ class DynamicsDataset(torch.utils.data.Dataset):
             mask.
         demog_transform: Same as obs_transform but for demographics.
         num_action_steps: the number of subsequent actions to pass as input to the model
+        type_actions: 'with', 'without', or 'random'
         """
         assert len(stay_ids) == len(observations) == len(demographics) == len(actions) == len(rewards)
         self.observations = observations
@@ -52,7 +53,8 @@ class DynamicsDataset(torch.utils.data.Dataset):
         self.obs_transform = obs_transform
         self.demog_transform = demog_transform
         self.num_action_steps = num_action_steps
-        self.suppress_actions = suppress_actions
+        self.type_actions = type_actions
+        self.constant_value = np.array([0, 0])
         
         self.stay_id_pos = []
         last_stay_id = None
@@ -64,10 +66,10 @@ class DynamicsDataset(torch.utils.data.Dataset):
                 self.stay_id_pos.append((i, 0))
                 last_stay_id = stay_id
         self.stay_id_pos[-1] = (self.stay_id_pos[-1][0], len(self.stay_ids))
-        
+   
     def __len__(self):
         return len(self.stay_id_pos)
-
+            
     def __getitem__(self, index):
         """
         Returns:
@@ -104,9 +106,21 @@ class DynamicsDataset(torch.utils.data.Dataset):
                 elif i >= actions.shape[0]: new_actions = np.hstack([new_actions, np.zeros(actions.shape)])
                 else: new_actions = np.hstack([new_actions, np.concatenate([actions[i:,:], np.zeros((i, actions.shape[1]))])])
             actions = new_actions
-        if self.suppress_actions:
+        if self.type_actions == 'without':
             actions = np.zeros(actions.shape)
-            
+        elif self.type_actions == 'random':
+            actions = np.zeros(actions.shape)
+            fluids = self.actions[:,0]
+            vaso = self.actions[:,1]
+            for i in range(self.num_action_steps):
+                actions[:,2 * i] = np.random.choice(fluids, size=actions.shape[0])
+                actions[:,2 * i + 1] = np.random.choice(vaso, size=actions.shape[0])
+        elif self.type_actions == 'constant':
+            actions = np.zeros(actions.shape)
+            for i in range(self.num_action_steps):
+                actions[:,2 * i] = self.constant_value[0]
+                actions[:,2 * i + 1] = self.constant_value[1]
+
         # Mask if needed
         input_obs = observations
         if self.mask_prob > 0.0:

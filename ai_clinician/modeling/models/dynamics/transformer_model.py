@@ -115,9 +115,15 @@ class TransformerDynamicsModel(nn.Module):
 
         self.state_embedding = nn.Linear(state_dim, embed_dim // 2)
         self.demog_embedding = nn.Linear(demog_dim, embed_dim // 2)
+        # self.state_demog_norm = nn.LayerNorm(embed_dim)
         # self.state_demog = nn.Linear(embed_dim * 2, embed_dim)
         self.action_embedding = nn.Linear(action_dim, embed_dim - int(embed_dim * 0.75)) # Incorporate the actions at a later layer so we have a state-only embedding
         self.state_compressor = nn.Linear(embed_dim, int(embed_dim * 0.75))
+        # self.state_demog_norm = nn.LayerNorm(embed_dim)
+        # # self.state_demog = nn.Linear(embed_dim * 2, embed_dim)
+        # self.action_embedding = nn.Linear(action_dim, embed_dim - int(embed_dim * 0.875)) # Incorporate the actions at a later layer so we have a state-only embedding
+        # self.state_compressor = nn.Linear(embed_dim, int(embed_dim * 0.875))
+        # self.state_action_norm = nn.LayerNorm(embed_dim)
         self.state_transformer = TransformerLatentSpaceModel(embed_dim, nhead, nlayers, dropout, positional_encoding=positional_encoding)
         self.state_action_transformer = TransformerLatentSpaceModel(embed_dim, nhead, nlayers, dropout, positional_encoding=False)
         self.device = device
@@ -146,7 +152,7 @@ class TransformerDynamicsModel(nn.Module):
         state_embed = F.leaky_relu(self.state_embedding(state))
         demog_embed = F.leaky_relu(self.demog_embedding(demog))
         combined = torch.cat((state_embed, demog_embed), 2)
-        return combined
+        return combined # self.state_demog_norm(combined)
         # return self.state_demog(combined)
     
     def forward(self, state, demog, action, src_mask, return_attention_weights=False):
@@ -184,6 +190,7 @@ class TransformerDynamicsModel(nn.Module):
         s_embed = self.state_compressor(state_embed)
         action_embed = self.action_embedding(action)
         # sa_embed = self.state_action(torch.cat((state_embed, action_embed), 2))
+        # sa_embed = self.state_action_norm(torch.cat((s_embed, action_embed), 2))
         sa_embed = torch.cat((s_embed, action_embed), 2)
         
         return self.state_action_transformer(sa_embed, src_mask, return_attention_weights=return_attention_weights)
