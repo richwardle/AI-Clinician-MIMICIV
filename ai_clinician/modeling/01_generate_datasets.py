@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     # Find sepsis cohort in the mimic dataset
     mdp_data = load_csv(os.path.join(in_dir, "mimic_dataset.csv"))
-    sepsis_cohort = load_csv(os.path.join(in_dir, "sepsis_cohort.csv"))
+   # sepsis_cohort = load_csv(os.path.join(in_dir, "sepsis_cohort.csv"))
 
     MIMICtable = mdp_data[mdp_data[C_ICUSTAYID].isin(sepsis_cohort[C_ICUSTAYID])].reset_index(drop=True)
     assert args.outcome_col in MIMICtable.columns, "Outcome column '{}' not found in MIMICtable".format(args.outcome_col)
