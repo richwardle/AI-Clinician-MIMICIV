@@ -3,11 +3,11 @@ This module provides an adapter to the models developed by Killian et al.,
 included in this repo under the 'sota' module.
 """
 import numpy as np
-from ai_clinician.modeling.columns import C_OUTCOME
+from ai_clinician.modeling.gosh_columns import C_OUTCOME
 from ai_clinician.modeling.models.base_ import BaseModel
 from ai_clinician.modeling.models.discrete_bcq import FC_BC, DiscreteBCQ
 from ai_clinician.modeling.models.sota import AE, AIS, CDE, DST, DDM, RNN, ODERNN
-from ai_clinician.preprocessing.columns import *
+from ai_clinician.preprocessing.gosh_columns import *
 from itertools import chain
 import torch
 import torch.nn.functional as F

@@ -1,4 +1,6 @@
 data/
+ai_clinician/implementation/gosh/outputs/
+ai_clinician/implementation/mimic/outputs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -3,10 +3,14 @@ import pandas as pd
 import tqdm
 import argparse
 import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 from ai_clinician.modeling.normalization import DataNormalization
 from ai_clinician.preprocessing.utils import load_csv
-from ai_clinician.preprocessing.columns import *
-from ai_clinician.modeling.columns import *
+from ai_clinician.preprocessing.gosh_columns import *
+from ai_clinician.modeling.gosh_columns import *
 from scipy.stats import zscore
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -20,32 +24,41 @@ def save_data_files(dir, MIMICraw, MIMICzs, metadata):
 
 if __name__ == '__main__':
 
+    # Set up argument parser
     parser = argparse.ArgumentParser(description=('Generates a train/test '
-        'split of the MIMIC-IV dataset, and generates files labeled '
-        '{train|test}/MIMICraw.npy and {train|test}/MIMICzs.npy.'))
-    parser.add_argument('input', type=str,
-                        help='Data directory (should contain mimic_dataset.csv and sepsis_cohort.csv)')
-    parser.add_argument('output', type=str,
-                        help='Directory in which to output')
-    parser.add_argument('--train-size', dest='train_size', type=float, default=0.6,
-                        help='Proportion of data to use in training (default 0.6)')
-    parser.add_argument('--outcome', dest='outcome_col', type=str, default='died_in_hosp',
-                        help='Name of column to use for outcomes (probably "died_in_hosp" [default] or "morta_90")')
+            'split of the selected dataset, and generates files labeled '
+            '{train|test}/[dataset]raw.npy and {train|test}/[dataset]zs.npy.'))
+    parser.add_argument('dataset', type=str, choices=['mimic', 'gosh', 'phoenix'],
+                        help='Select the dataset to process: mimic, gosh, or phoenix')
+    parser.add_argument('--train-size', dest='train_size', type=float, default=0.8,
+                        help='Proportion of data to use in training (default 0.8)')
+    parser.add_argument('--outcome', dest='outcome_col', type=str, default='mortality_90d',
+                        help='Name of column to use for outcomes (probably "died_in_hosp" or "mortality_90d" [default])')
 
     args = parser.parse_args()
 
-    in_dir = args.input
-    out_dir = args.output
-    if not os.path.exists(out_dir):
-        os.mkdir(out_dir)
+    # Resolve absolute paths
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # You can then use args.dataset to determine which dataset to process
+    selected_dataset = args.dataset
+
+    # Define input and output directories based on the selected dataset
+    if selected_dataset == 'mimic':
+        input_dir = 'ai_clinician/implementation/mimic/data/'
+        output_dir = 'ai_clinician/implementation/mimic/outputs/'
+    elif selected_dataset == 'gosh':
+        input_dir = 'ai_clinician/implementation/gosh/data/'
+        output_dir = 'ai_clinician/implementation/gosh/outputs/'
+    elif selected_dataset == 'phoenix':
+        input_dir = 'ai_clinician/implementation/phoenix/data/'
+        output_dir = 'ai_clinician/implementation/phoenix/outputs/'
 
     # Find sepsis cohort in the mimic dataset
-    mdp_data = load_csv(os.path.join(in_dir, "mimic_dataset.csv"))
-   # sepsis_cohort = load_csv(os.path.join(in_dir, "sepsis_cohort.csv"))
+    MIMICtable = load_csv(os.path.join(input_dir, "mimic_dataset.csv"))
+    # sepsis_cohort = load_csv(os.path.join(in_dir, "sepsis_cohort.csv"))
 
-    MIMICtable = mdp_data[mdp_data[C_ICUSTAYID].isin(sepsis_cohort[C_ICUSTAYID])].reset_index(drop=True)
+    # MIMICtable = mdp_data[mdp_data[C_ICUSTAYID].isin(sepsis_cohort[C_ICUSTAYID])].reset_index(drop=True)
     assert args.outcome_col in MIMICtable.columns, "Outcome column '{}' not found in MIMICtable".format(args.outcome_col)
-
 
     # find patients who died in ICU during data collection period
     icuuniqueids = MIMICtable[C_ICUSTAYID].unique()
@@ -63,8 +76,8 @@ if __name__ == '__main__':
     MIMICzs_train = normer.transform(MIMICtable.iloc[train_indexes])
     MIMICzs_test = normer.transform(MIMICtable.iloc[test_indexes])
 
-    train_dir = os.path.join(out_dir, "train")
-    test_dir = os.path.join(out_dir, "test")
+    train_dir = os.path.join(output_dir, "train")
+    test_dir = os.path.join(output_dir, "test")
     if not os.path.exists(train_dir):
         os.mkdir(train_dir)
     if not os.path.exists(test_dir):
@@ -74,7 +87,7 @@ if __name__ == '__main__':
     
     # Save files
     print("Saving files")
-    normer.save(os.path.join(out_dir, 'normalization.pkl'))
+    normer.save(os.path.join(output_dir, 'normalization.pkl'))
     save_data_files(train_dir,
                     MIMICraw.iloc[train_indexes],
                     MIMICzs_train,

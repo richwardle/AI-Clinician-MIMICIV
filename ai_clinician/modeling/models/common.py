@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 import tqdm
-from ai_clinician.modeling.columns import *
-from ai_clinician.preprocessing.columns import *
+from ai_clinician.modeling.gosh_columns import *
+from ai_clinician.preprocessing.gosh_columns import *
 from ai_clinician.modeling.models.offpolicy import off_policy_q_learning
 
 def fit_action_bins(input_amounts, vaso_doses, n_action_bins=5):
@@ -264,17 +264,30 @@ def evaluate_policy_wis(metadata, physician_probabilities, model_probabilities, 
     metadata = metadata.copy()
     metadata[C_SOFTENED_PHYSICIAN_PROBABILITY] = physician_probabilities
     metadata[C_SOFTENED_MODEL_PROBABILITY] = model_probabilities
+
     def _make_wis_record(group):
-        # Structure:
-        # phys_prob, model_prob, reward (= 0)
-        # plus terminal state with reward from reward_vals
-        return np.vstack([
-            np.hstack([
-                group[[C_SOFTENED_PHYSICIAN_PROBABILITY,
-                       C_SOFTENED_MODEL_PROBABILITY]],
-                np.zeros((len(group), 1))]),
-            np.array([1, 1, reward_vals[group[C_OUTCOME].iloc[0]]])
-        ])
+    # Structure:
+    # phys_prob, model_prob, reward (= 0)
+    # plus terminal state with reward from reward_vals
+        try:
+            outcome = group[C_OUTCOME].iloc[0]
+            if isinstance(outcome, (np.float64, float)):
+                outcome = int(outcome)  # Convert to integer if it's a float
+            
+            return np.vstack([
+                np.hstack([
+                    group[[C_SOFTENED_PHYSICIAN_PROBABILITY,
+                        C_SOFTENED_MODEL_PROBABILITY]],
+                    np.zeros((len(group), 1))]),
+                np.array([1, 1, reward_vals[outcome]])
+            ])
+        except Exception as e:
+            print(f"Error in _make_wis_record: {e}")
+            print(f"Group type: {type(group)}")
+            print(f"Group content: {group}")
+            print(f"Outcome: {outcome}, type: {type(outcome)}")
+            print(f"reward_vals: {reward_vals}")
+            raise
     
     traces = {
         stay_id: _make_wis_record(trace)

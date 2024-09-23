@@ -3,14 +3,18 @@ import pandas as pd
 import tqdm
 import argparse
 import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 import shutil
 import pickle
 from ai_clinician.modeling.models.komorowski_model import *
 from ai_clinician.modeling.models.common import *
-from ai_clinician.modeling.columns import C_OUTCOME
+from ai_clinician.modeling.gosh_columns import C_OUTCOME
 from ai_clinician.preprocessing.utils import load_csv
-from ai_clinician.preprocessing.columns import *
-from sklearn.model_selection import train_test_split
+from ai_clinician.preprocessing.gosh_columns import *
+
 import matplotlib.pyplot as plt
 
 tqdm.tqdm.pandas()
@@ -18,10 +22,12 @@ tqdm.tqdm.pandas()
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description=('Evaluates an AI Clinician model on the MIMIC-IV test set.'))
+    '''
     parser.add_argument('data', type=str,
                         help='Model data directory (should contain train and test directories)')
     parser.add_argument('model', type=str,
                         help='Path to pickle file containing the model')
+    '''
     parser.add_argument('--out', dest='out_path', type=str, default=None,
                         help='Path to pickle file at which to write out results (optional)')
     parser.add_argument('--gamma', dest='gamma', type=float, default=0.99,
@@ -34,8 +40,8 @@ if __name__ == '__main__':
                         help='Number of bootstrappings to use for WIS estimation (AI policy)')
     args = parser.parse_args()
     
-    data_dir = args.data
-    model = AIClinicianModel.load(args.model)
+    data_dir = 'ai_clinician/implementation/mimic/outputs'
+    model = AIClinicianModel.load('ai_clinician/implementation/mimic/outputs/models/model_params/best_model.pkl')
     assert model.metadata is not None, "Model missing metadata needed to generate actions"
 
     n_cluster_states = model.n_cluster_states
@@ -319,9 +325,11 @@ if __name__ == '__main__':
     plt.show()
     #endregion
 
-    #TODO: test on other datset (besides MIMIC)
-    
-    if args.out_path is not None:
+
+    #endregion
+
+    out_path = 'ai_clinician/implementation/mimic/outputs/model_stats/model_stats.pkl'
+    if out_path is not None:
         with open(args.out_path, "wb") as file:
             pickle.dump(model_stats, file)
     print('Done.')

@@ -3,8 +3,8 @@ import pandas as pd
 import tqdm
 import pickle
 from ai_clinician.preprocessing.utils import load_csv
-from ai_clinician.preprocessing.columns import *
-from ai_clinician.modeling.columns import *
+from ai_clinician.preprocessing.gosh_columns import *
+from ai_clinician.modeling.gosh_columns import *
 from scipy.stats import zscore
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler

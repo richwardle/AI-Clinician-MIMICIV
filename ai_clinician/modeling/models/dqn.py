@@ -2,8 +2,8 @@ import numpy as np
 import tqdm
 import pickle
 
-from ai_clinician.preprocessing.columns import *
-from ai_clinician.modeling.columns import *
+from ai_clinician.preprocessing.gosh_columns import *
+from ai_clinician.modeling.gosh_columns import *
 from ai_clinician.modeling.models.base_ import BaseModel
 from ai_clinician.modeling.models.torch_modules import SparseAutoencoder, DuelingDQN, PrioritizedBuffer, embed_autoencoder, test_autoencoder, train_autoencoder
 
@@ -370,3 +370,4 @@ class DuelingDQNModel(BaseModel):
         model.autoencoder.load_state_dict(model_data['autoencoder'])
         model.agent = PERAgent.from_state_dict(model_data['agent'])
         return model
+

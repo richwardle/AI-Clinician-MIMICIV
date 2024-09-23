@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "../pediatric_sepsis_treatment"
+		},
+		{
+			"path": "../py_ai_clinician"
+		},
+		{
+			"path": "../offline_rl_rdwcs"
+		},
+		{
+			"path": "."
+		}
+	],
+	"settings": {}
+}

@@ -3,13 +3,17 @@ import pandas as pd
 import tqdm
 import argparse
 import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 import shutil
 from ai_clinician.preprocessing.utils import load_csv
-from ai_clinician.preprocessing.columns import *
+from ai_clinician.preprocessing.gosh_columns import *
 from ai_clinician.modeling.models.komorowski_model import AIClinicianModel
 from ai_clinician.modeling.models.common import *
 from ai_clinician.modeling.models.dqn import DuelingDQNModel
-from ai_clinician.modeling.columns import C_OUTCOME
+from ai_clinician.modeling.gosh_columns import C_OUTCOME
 from sklearn.model_selection import train_test_split
 
 tqdm.tqdm.pandas()
@@ -71,7 +75,7 @@ if __name__ == '__main__':
     unique_icu_stays = metadata[C_ICUSTAYID].unique()
     
     # Bin vasopressor and fluid actions
-    print("Create actions")    
+    print("Create actions")
     n_action_bins = args.n_action_bins
     n_actions = n_action_bins * n_action_bins # for both vasopressors and fluids
 
@@ -272,3 +276,4 @@ if __name__ == '__main__':
     all_model_stats.to_csv(os.path.join(out_dir, "model_stats{}.csv".format('_' + args.worker_label if args.worker_label else '')),
                            float_format='%.6f')
     print('Done.')
+

@@ -1,8 +1,8 @@
 import numpy as np
 import tqdm
 from numba import jit
-from ai_clinician.modeling.columns import *
-from ai_clinician.preprocessing.columns import C_ICUSTAYID
+from ai_clinician.modeling.gosh_columns import *
+from ai_clinician.preprocessing.gosh_columns import C_ICUSTAYID
 
 @jit(nopython=True)
 def _q_learn_trace(Q, trace, gamma, alpha):
